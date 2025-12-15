@@ -1,7 +1,7 @@
 // --- Scash-DAP 协议实现 ---
 
 const { bech32 } = require('bech32');
-const { NETWORK } = require('./const.js');
+const { NETWORK } = require('../const.js');
 const bitcoin = require('bitcoinjs-lib');
 
 class ScashDAP {
@@ -44,15 +44,12 @@ class ScashDAP {
 
     for (const out of outputs) {
       // 1. 解码地址
-      let hash;
-      try {
-        const decoded = bech32.decode(out.address);
-        if (decoded.prefix !== 'scash') continue;
-        hash = Buffer.from(bech32.fromWords(decoded.words.slice(1)));
-      } catch (e) { continue; }
+      const address = out.scriptPubKey.address || (out.scriptPubKey.addresses ? out.scriptPubKey.addresses[0] : null);
+      if (!address) continue;
+      const hash = this.decodeScashAddressToHash(address);
 
       // 2. 检查协议头
-      if (hash.length === 32 && hash.toString('hex').startsWith(MAGIC_HEX)) {
+      if (hash && hash.length === 32 && hash.toString('hex').startsWith(MAGIC_HEX)) {
         // 3. 提取数据 (去掉前4字节)
         fullBuffer = Buffer.concat([fullBuffer, hash.subarray(4)]);
       }
@@ -65,6 +62,23 @@ class ScashDAP {
     }
 
     return clean.toString('utf8');
+  }
+
+  /**
+ * 将 Scash 地址解码为 32字节 Hash Buffer
+ * 如果不是 P2WSH (Scash1...) 或解码失败，返回 null
+ */
+  decodeScashAddressToHash(address) {
+    try {
+      if (!address || !address.startsWith('scash1')) return null;
+      const decoded = bech32.decode(address);
+      if (decoded.prefix !== 'scash') return null;
+      // bech32 words -> bytes
+      const data = bech32.fromWords(decoded.words.slice(1));
+      return Buffer.from(data);
+    } catch (e) {
+      return null;
+    }
   }
 }
 
