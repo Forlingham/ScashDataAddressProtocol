@@ -1,0 +1,33 @@
+{
+  "name": "scashdataaddressprotocol",
+  "version": "1.0.0",
+  "description": "**Scash-DAP** 是一种轻量级、无状态、抗审查的链上数据存储协议。它利用比特币（及 Scash）原生 SegWit (P2WSH) 机制，将任意数据伪装成标准的区块链地址，从而实现绕过 `OP_RETURN` 限制的永久数据存证。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Forlingham/ScashDataAddressProtocol.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Forlingham/ScashDataAddressProtocol/issues"
+  },
+  "homepage": "https://github.com/Forlingham/ScashDataAddressProtocol#readme",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "bech32": "^2.0.0",
+    "bip32": "^5.0.0",
+    "bip39": "^3.1.0",
+    "bitcoinjs-lib": "^7.0.0",
+    "ecpair": "^3.0.0",
+    "tiny-secp256k1": "^2.2.4"
+  },
+  "overrides": {
+    "valibot": "^1.2.0"
+  }
+}
