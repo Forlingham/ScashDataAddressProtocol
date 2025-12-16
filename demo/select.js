@@ -1,12 +1,11 @@
 
 
 const { rpcApi } = require('./tool/tool.js');
-const ScashDAP = require('./core/ScashDAP.js');
+const ScashDAP = require('../index.js');
+const { NETWORK } = require('../const.js');
 
 // 初始化ScashDAP
-const scashDAP = new ScashDAP();
-
-
+const scashDAP = new ScashDAP(NETWORK);
 
 
 
@@ -17,7 +16,7 @@ async function select(txid) {
 
   const tx = await rpcApi('getrawtransaction', [txid, true]);
 
-  
+
   if (!tx) return;
   const outputs = tx.vout;
 

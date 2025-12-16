@@ -1,11 +1,15 @@
 // --- Scash-DAP 协议实现 ---
 
 const { bech32 } = require('bech32');
-const { NETWORK } = require('../const.js');
 const bitcoin = require('bitcoinjs-lib');
 
 class ScashDAP {
-  constructor() { }
+
+  NETWORK = ""
+
+  constructor(network) {
+    this.NETWORK = network;
+  }
 
   // --- 核心协议实现, 创建 DAP 输出 ---
   createDapOutputs(text) {
@@ -25,7 +29,7 @@ class ScashDAP {
       // 生成 P2WSH 地址
       const payment = bitcoin.payments.p2wsh({
         hash: chunk,
-        network: NETWORK
+        network: this.NETWORK
       });
 
       outputs.push({
