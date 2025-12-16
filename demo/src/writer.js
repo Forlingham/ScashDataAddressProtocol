@@ -8,9 +8,9 @@ const { BIP32Factory } = require('bip32');
 const bip32 = BIP32Factory(tinysecp);
 const { NETWORK } = require('./const.js');
 const fs = require('fs');
-const ScashDAP = require('../index.js');
 const { rpcApi } = require('./tool/tool.js');
 const path = require('path');
+const ScashDAP = require('../../index.js');
 
 // 初始化ScashDAP
 const scashDAP = new ScashDAP(NETWORK);
@@ -25,12 +25,13 @@ const DERIVATION_PATH = "m/84'/0'/0'/0/0";
  * 主函数
  * @param {string} TEXT_DATA - 要上链的文字数据
  */
-async function writer(TEXT_DATA) {
+async function writer(TEXT_DATA, logger = console) {
+
     let envContent = '';
     try {
         envContent = fs.readFileSync(envPath, 'utf8');
     } catch (err) {
-        console.log('未找到 MY_MNEMONIC 助记词,请先创建助记词');
+        logger.log('未找到 MY_MNEMONIC 助记词,请先创建助记词');
         return
     }
 
@@ -40,11 +41,11 @@ async function writer(TEXT_DATA) {
     const MY_MNEMONIC = match ? match[1].trim() : '';
 
     if (!MY_MNEMONIC) {
-        console.log('未找到 MY_MNEMONIC 助记词,请先创建助记词');
+        logger.log('未找到 MY_MNEMONIC 助记词,请先创建助记词');
         return
     }
     try {
-        console.log("=== 1. 初始化钱包 ===");
+        logger.log("=== 1. 初始化钱包 ===");
         let mnemonic = MY_MNEMONIC;
 
         // 派生私钥
@@ -59,28 +60,29 @@ async function writer(TEXT_DATA) {
             network: SCASH_NETWORK
         });
 
-        console.log(`- 钱包地址: ${myAddress}`);
-        console.log("\n=== 2. 扫描资金 (RPC) ===");
+        logger.log(`- 钱包地址: ${myAddress}`);
+        logger.log("\n=== 2. 扫描资金 (RPC) ===");
         const scanResult = await rpcApi('scantxoutset', ['start', [{ desc: `addr(${myAddress})` }]]);
         const unspents = scanResult.unspents;
 
         if (!unspents || unspents.length === 0) {
-            console.error(`[错误] 地址 ${myAddress} 没有资金！请先转账。`);
+            logger.error(`[错误] 地址 ${myAddress} 没有资金！请先转账到该地址。准备转账 0.01 SCASH 到该地址。`);
+            logger.log(`- 体验完后，助记词可以导入到网页钱包中把资金转走`);
             return;
         }
 
         const selectedUtxo = unspents.find(u => u.amount > 0.001);
         if (!selectedUtxo) {
-            console.error(`[错误] 余额不足支付手续费。`);
+            logger.error(`[错误] 余额不足支付手续费。`);
             return;
         }
 
         const utxoValueSat = Math.floor(selectedUtxo.amount * 100000000);
         const utxoScript = Buffer.from(selectedUtxo.scriptPubKey, 'hex');
-        console.log(`- 使用资金: ${selectedUtxo.amount} SCASH (${selectedUtxo.txid})`);
+        logger.log(`- 使用资金: ${selectedUtxo.amount} SCASH (${selectedUtxo.txid})`);
 
 
-        console.log("\n=== 3. 构建伪造地址交易 (PSBT) ===");
+        logger.log("\n=== 3. 构建伪造地址交易 (PSBT) ===");
         const psbt = new bitcoin.Psbt({ network: SCASH_NETWORK });
 
         psbt.addInput({
@@ -94,12 +96,12 @@ async function writer(TEXT_DATA) {
 
         // --- [核心修改] 生成伪装地址输出 ---
         const dataOutputs = scashDAP.createDapOutputs(TEXT_DATA);
-        console.log(dataOutputs, '233');
+        logger.log(dataOutputs, '233');
 
         let totalBurned = 0;
         dataOutputs.forEach((item, index) => {
-            console.log(`- [数据片段 ${index + 1}] 伪装地址: ${item.address}`);
-            console.log(`  (对应数据Hex: ${item.dataHex})`);
+            logger.log(`- [数据片段 ${index + 1}] 伪装地址: ${item.address}`);
+            logger.log(`  (对应数据Hex: ${item.dataHex})`);
 
             psbt.addOutput({
                 address: item.address,
@@ -121,7 +123,7 @@ async function writer(TEXT_DATA) {
             value: BigInt(changeSat),
         });
 
-        console.log("\n=== 4. 签名与广播 ===");
+        logger.log("\n=== 4. 签名与广播 ===");
 
         // 签名修复 (Buffer类型)
         const customSigner = {
@@ -132,20 +134,24 @@ async function writer(TEXT_DATA) {
         psbt.finalizeAllInputs();
 
         const signedHex = psbt.extractTransaction().toHex();
-        console.log(`- 交易构建完成`);
+        logger.log(`- 交易构建完成`);
 
         const txid = await rpcApi('sendrawtransaction', [signedHex]);
 
-        console.log("\n✅ 上链成功！");
-        console.log(`TXID: ${txid}`);
-        console.log(`\n说明: 你的文字被拆分并“转账”给了上面打印的 [伪装地址]。`);
-        console.log(`这些地址不属于任何人，资金(${totalBurned} sats)将被永久销毁。`);
+        logger.log("\n✅ 上链成功！");
+        logger.log(`TXID: ${txid}`);
+        logger.log(`\n说明: 你的文字被拆分并“转账”给了上面打印的 [伪装地址]。`);
+        logger.log(`这些地址不属于任何人，资金(${totalBurned} sats)将被永久销毁。`);
     } catch (e) {
-        console.error("\n❌ 错误:", e);
-        if (e.response) console.error("RPC Response:", e.response.data);
+        logger.error("\n❌ 错误:", e);
+        if (e.response) logger.error("RPC Response:", e.response.data);
     }
 }
-writer(`这是一个demo测试，用于测试ScashDAP协议，当前是基于 0xAFAFAFAF 协议头的DAP输出。`)
+
+if (require.main === module) {
+    writer("你好，ScashDAP！").catch(console.error);
+}
+
 module.exports = {
     writer
 }

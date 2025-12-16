@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>ScashDAP Demo</title>
+  <style>
+    :root {
+      --primary-color: #2196F3;
+      --primary-hover: #1976D2;
+      --bg-color: #f0f2f5;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --text-secondary: #666;
+      --border-color: #e0e0e0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .header-bar {
+      background-color: var(--card-bg);
+      padding: 15px 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo {
+      height: 40px;
+      width: auto;
+    }
+
+    .app-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 25px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
+
+    .left-panel {
+      flex: 1 1 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .right-panel {
+      flex: 1 1 450px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.03);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: var(--text-color);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+    }
+
+    h3::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background-color: var(--primary-color);
+      margin-right: 10px;
+      border-radius: 2px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 15px;
+      margin-bottom: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+      box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      background-color: #e0e0e0;
+      color: #999;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    #console-output {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      padding: 20px;
+      border-radius: 12px;
+      height: 500px;
+      overflow-y: auto;
+      font-family: 'Consolas', 'Monaco', monospace;
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.5;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* Custom Scrollbar for Console */
+    #console-output::-webkit-scrollbar {
+      width: 10px;
+    }
+    #console-output::-webkit-scrollbar-track {
+      background: #2d2d2d;
+      border-radius: 0 12px 12px 0;
+    }
+    #console-output::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 5px;
+    }
+    #console-output::-webkit-scrollbar-thumb:hover {
+      background: #777;
+    }
+
+    .log-info { color: #81c784; border-bottom: 1px solid #333; padding: 2px 0; }
+    .log-error { color: #e57373; border-bottom: 1px solid #333; padding: 2px 0; }
+    .log-warn { color: #fff176; border-bottom: 1px solid #333; padding: 2px 0; }
+
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    
+    .console-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .console-header h3 {
+        margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header-bar">
+    <div class="logo-container">
+      <img src="./img/logo.png" alt="ScashDAP Logo" class="logo">
+      <h1 class="app-title">ScashDAP 协议演示</h1>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <!-- 左侧：功能区域 -->
+    <div class="left-panel">
+      <!-- 1. 钱包管理 -->
+      <div class="card">
+        <h3>钱包管理</h3>
+        <p class="section-desc">创建或查看当前环境变量中的钱包助记词和地址。首次使用请点击此处生成。</p>
+        <button id="btn-create-wallet">查看/创建钱包</button>
+      </div>
+
+      <!-- 2. 数据上链 -->
+      <div class="card">
+        <h3>数据上链 (Writer)</h3>
+        <p class="section-desc">将文本数据拆分并编码为 Scash 伪装地址上链。支持长文本自动分割。</p>
+        <input type="text" id="input-writer" placeholder="请输入要上链的文本内容...">
+        <div style="text-align: right;">
+          <button id="btn-writer">开始上链</button>
+        </div>
+      </div>
+
+      <!-- 3. 数据查询 -->
+      <div class="card">
+        <h3>数据查询 (Select)</h3>
+        <p class="section-desc">根据交易哈希 (TXID) 解析链上存储的数据内容。</p>
+        <input type="text" id="input-select" placeholder="请输入 TXID (Transaction Hash)">
+        <div style="text-align: right;">
+          <button id="btn-select">查询数据</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：日志输出 -->
+    <div class="right-panel">
+      <!-- 控制台输出 -->
+      <div class="card">
+        <div class="console-header">
+            <h3>运行日志</h3>
+            <button onclick="document.getElementById('console-output').innerHTML = ''"
+              style="background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); padding: 4px 10px; font-size: 12px;">
+              清空日志
+            </button>
+        </div>
+        <div id="console-output"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 自动打开 DevTools
+    // if (typeof nw !== 'undefined') {
+    //   nw.Window.get().showDevTools();
+    // }
+
+    // --- 1. 重写 Console 以显示到页面 ---
+    const consoleOutput = document.getElementById('console-output');
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    function appendLog(message, type) {
+      const div = document.createElement('div');
+      div.className = `log-${type}`;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      consoleOutput.appendChild(div);
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    console.log = function (...args) {
+      originalLog.apply(console, args);
+      // 简单的将所有参数转换为字符串拼接
+      const msg = args.map(arg =>
+        (typeof arg === 'object') ? JSON.stringify(arg, null, 2) : String(arg)
+      ).join(' ');
+      appendLog(msg, 'info');
+    };
+
+    console.error = function (...args) {
+      originalError.apply(console, args);
+      const msg = args.map(arg =>
+        (typeof arg === 'object') ? JSON.stringify(arg, null, 2) : String(arg)
+      ).join(' ');
+      appendLog(msg, 'error');
+    };
+
+    console.warn = function (...args) {
+      originalWarn.apply(console, args);
+      const msg = args.map(arg =>
+        (typeof arg === 'object') ? JSON.stringify(arg, null, 2) : String(arg)
+      ).join(' ');
+      appendLog(msg, 'warn');
+    };
+
+    // --- 2. 引入模块 ---
+    // 注意：在 NW.js 环境下，require 是直接可用的
+    let createWalletModule, writerModule, selectModule;
+
+    try {
+      createWalletModule = require('./src/createWallet.js');
+      writerModule = require('./src/writer.js');
+      selectModule = require('./src/select.js');
+      console.log("模块加载成功！");
+    } catch (e) {
+      console.error("模块加载失败:", e);
+    }
+
+    // --- 3. 绑定事件 ---
+
+    // 按钮：创建/查看钱包
+    document.getElementById('btn-create-wallet').onclick = async function () {
+      this.disabled = true;
+      try {
+        console.log("正在执行 createWallet...");
+        // 传入当前 window 的 console 对象
+        const res = await createWalletModule.createWallet(console);
+      } catch (err) {
+        console.error("执行出错:", err);
+      } finally {
+        this.disabled = false;
+      }
+    };
+
+    // 按钮：上链
+    document.getElementById('btn-writer').onclick = async function () {
+      const text = document.getElementById('input-writer').value;
+      if (!text) {
+        alert("请输入要上链的文本！");
+        return;
+      }
+      this.disabled = true;
+      try {
+        console.log(`正在上链数据: "${text}" ...`);
+        // 传入当前 window 的 console 对象
+        await writerModule.writer(text, console);
+      } catch (err) {
+        console.error("上链出错:", err);
+      } finally {
+        this.disabled = false;
+      }
+    };
+
+    // 按钮：查询
+    document.getElementById('btn-select').onclick = async function () {
+      const txid = document.getElementById('input-select').value.trim();
+      if (!txid) {
+        alert("请输入 TXID！");
+        return;
+      }
+      this.disabled = true;
+      try {
+        console.log(`正在查询 TXID: ${txid} ...`);
+        // 传入当前 window 的 console 对象
+        await selectModule.select(txid, console);
+      } catch (err) {
+        console.error("查询出错:", err);
+      } finally {
+        this.disabled = false;
+      }
+    };
+
+  </script>
+</body>
+
+</html>
