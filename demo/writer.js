@@ -8,13 +8,14 @@ const { BIP32Factory } = require('bip32');
 const bip32 = BIP32Factory(tinysecp);
 const { NETWORK } = require('./const.js');
 const fs = require('fs');
-const ScashDAP = require('./core/ScashDAP.js');
+const ScashDAP = require('../index.js');
 const { rpcApi } = require('./tool/tool.js');
+const path = require('path');
 
 // 初始化ScashDAP
-const scashDAP = new ScashDAP();
+const scashDAP = new ScashDAP(NETWORK);
 
-
+const envPath = path.resolve(__dirname, '../.env');
 const SCASH_NETWORK = NETWORK;
 
 // 派生路径
@@ -87,12 +88,13 @@ async function writer(TEXT_DATA) {
             index: selectedUtxo.vout,
             witnessUtxo: {
                 script: utxoScript,
-                value: utxoValueSat,
+                value: BigInt(utxoValueSat),
             },
         });
 
         // --- [核心修改] 生成伪装地址输出 ---
         const dataOutputs = scashDAP.createDapOutputs(TEXT_DATA);
+        console.log(dataOutputs, '233');
 
         let totalBurned = 0;
         dataOutputs.forEach((item, index) => {
@@ -101,21 +103,22 @@ async function writer(TEXT_DATA) {
 
             psbt.addOutput({
                 address: item.address,
-                value: item.value,
+                value: BigInt(item.value),
             });
             totalBurned += item.value;
         });
         // --------------------------------
 
-        // 找零
+        // 手续费
         const fee = 5000;
+        // 找零
         const changeSat = utxoValueSat - totalBurned - fee;
 
         if (changeSat < 0) throw new Error("资金不足以支付烧币费用和手续费");
 
         psbt.addOutput({
             address: myAddress,
-            value: changeSat,
+            value: BigInt(changeSat),
         });
 
         console.log("\n=== 4. 签名与广播 ===");
@@ -142,7 +145,7 @@ async function writer(TEXT_DATA) {
         if (e.response) console.error("RPC Response:", e.response.data);
     }
 }
-
+writer(`这是一个demo测试，用于测试ScashDAP协议，当前是基于 0xAFAFAFAF 协议头的DAP输出。`)
 module.exports = {
     writer
 }

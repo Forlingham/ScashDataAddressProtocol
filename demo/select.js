@@ -2,7 +2,7 @@
 
 const { rpcApi } = require('./tool/tool.js');
 const ScashDAP = require('../index.js');
-const { NETWORK } = require('../const.js');
+const { NETWORK } = require('./const.js');
 
 // 初始化ScashDAP
 const scashDAP = new ScashDAP(NETWORK);
@@ -27,7 +27,7 @@ async function select(txid) {
   console.log(message);
 
 }
-select("f09b5717c26dbf8642957904a1b7c9c0cd3b65bc6723ab5d4744faca8f87e73c")
+select("1b876886f9654ab4be2b65e74eb06f2eeb2750ebd679d83218ebc3c267023074")
 module.exports = {
   select
 }
