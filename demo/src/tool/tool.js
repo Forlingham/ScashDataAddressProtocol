@@ -6,7 +6,6 @@ const { BIP32Factory } = require('bip32');
 const bip32 = BIP32Factory(tinysecp);
 const bitcoin = require('bitcoinjs-lib');
 const { NETWORK, RPC } = require('../const.js');
-const axios = require('axios');
 
 const SCASH_NETWORK = NETWORK;
 const DERIVATION_PATH = "m/84'/0'/0'/0/0"; // Defaulting to Native SegWit path
@@ -35,13 +34,31 @@ async function mnemonicToAddressAndPrivateKey(mnemonic) {
 
 async function rpcApi(method, params = []) {
   try {
-    const response = await axios.post(RPC.rpc, {
-      jsonrpc: '2.0', id: Date.now(), method, params
-    }, { auth: { username: RPC.user, password: RPC.pass } });
-    if (response.data.error) throw response.data.error;
-    return response.data.result;
+    const auth = Buffer.from(`${RPC.user}:${RPC.pass}`).toString('base64');
+    const response = await fetch(RPC.rpc, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: Date.now(),
+        method,
+        params
+      })
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${text}`);
+    }
+
+    const data = await response.json();
+    if (data.error) throw data.error;
+    return data.result;
   } catch (error) {
-    console.error("RPC Error:", error.response?.data || error.message);
+    console.error("RPC Error:", error.message || error);
     return null;
   }
 }

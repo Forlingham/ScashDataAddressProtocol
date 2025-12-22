@@ -14,14 +14,26 @@
   },
   "scripts": {
     "start": "nw .",
-    "cli": "node cli.js"
+    "cli": "node cli.js",
+    "build:cli:win": "node build.js win",
+    "build:cli:linux": "node build.js linux",
+    "build:cli": "node build.js"
+  },
+  "pkg": {
+    "scripts": [
+      "src/**/*.js",
+      "../src/**/*.js",
+      "../index.js"
+    ],
+    "assets": [
+      "package.json"
+    ]
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "axios": "^1.13.2",
     "bech32": "^2.0.0",
     "bip32": "^5.0.0",
     "bip39": "^3.1.0",
@@ -35,5 +47,9 @@
   },
   "overrides": {
     "valibot": "^1.2.0"
+  },
+  "devDependencies": {
+    "nw-builder": "^4.16.0",
+    "pkg": "^5.8.1"
   }
 }

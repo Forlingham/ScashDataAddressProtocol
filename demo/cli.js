@@ -5,6 +5,7 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const path = require('path');
 const fs = require('fs');
+const packageJson = require('./package.json');
 
 // Import modules
 // We use try-catch to provide a helpful error if modules are missing
@@ -30,7 +31,7 @@ const logger = {
 program
   .name('scash-dap')
   .description('CLI for ScashDataAddressProtocol Demo')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 program
   .command('wallet')

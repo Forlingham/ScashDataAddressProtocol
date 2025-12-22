@@ -15,7 +15,7 @@ const ScashDAP = require('../../index.js');
 // 初始化ScashDAP
 const scashDAP = new ScashDAP(NETWORK);
 
-const envPath = path.resolve(__dirname, '../.env');
+const envPath = process.pkg ? path.resolve(process.execPath, '../.env') : path.resolve(__dirname, '../.env');
 const SCASH_NETWORK = NETWORK;
 
 // 派生路径

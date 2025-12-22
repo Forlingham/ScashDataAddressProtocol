@@ -214,7 +214,7 @@
   <div class="header-bar">
     <div class="logo-container">
       <img src="./img/logo.png" alt="ScashDAP Logo" class="logo">
-      <h1 class="app-title">ScashDAP 协议演示</h1>
+      <h1 class="app-title">ScashDAP 协议演示 <span id="app-version" style="font-size: 14px; color: #666; font-weight: normal;"></span></h1>
     </div>
   </div>
 
@@ -270,6 +270,14 @@
     // if (typeof nw !== 'undefined') {
     //   nw.Window.get().showDevTools();
     // }
+    
+    // 显示版本号
+    try {
+        const packageJson = require('./package.json');
+        document.getElementById('app-version').textContent = `v${packageJson.version}`;
+    } catch (e) {
+        console.warn('Failed to load version:', e);
+    }
 
     // --- 1. 重写 Console 以显示到页面 ---
     const consoleOutput = document.getElementById('console-output');

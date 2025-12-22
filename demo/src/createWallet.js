@@ -3,7 +3,7 @@ const path = require('path');
 const bip39 = require('bip39');
 const { mnemonicToAddressAndPrivateKey } = require('./tool/tool.js');
 
-const envPath = path.resolve(__dirname, '../.env');
+const envPath = process.pkg ? path.resolve(process.execPath, '../.env') : path.resolve(__dirname, '../.env');
 
 
 async function main(logger = console) {
