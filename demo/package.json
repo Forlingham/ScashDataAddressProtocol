@@ -9,8 +9,12 @@
     "position": "center",
     "icon": "img/logo.png"
   },
+  "bin": {
+    "scash-dap": "./cli.js"
+  },
   "scripts": {
-    "start": "nw ."
+    "start": "nw .",
+    "cli": "node cli.js"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +26,10 @@
     "bip32": "^5.0.0",
     "bip39": "^3.1.0",
     "bitcoinjs-lib": "^7.0.0",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.2",
     "ecpair": "^3.0.0",
+    "inquirer": "^8.2.7",
     "nw": "^0.106.0",
     "tiny-secp256k1": "^2.2.4"
   },
