@@ -45,8 +45,21 @@ async function runTests() {
   {
     console.log('\n[测试 2] 长文本 (压缩模式)');
     // 生成长重复文本以确保压缩率
-    const text = "ScashDAP ".repeat(100); 
-    console.log(`原始文本长度: ${text}`);
+    const text = `
+    等摩尔比反应生成的复合物可提高氯化偏苯三酸酐与硼酸双甘油酯的反应活性，避免副反应发生；
+反应在N,N-二甲基甲酰胺（DMF）溶剂中进行，确保反应物充分溶解。
+（三）阻燃单体合成（酰化取代反应）
+反应物
+硼酸双甘油酯（C6H13BO6）、偏苯三酸酐三乙胺复合物
+产物
+含硼-磷协同阻燃单体（C15H13BO12）、三乙胺（C6H15N）
+反应方程式
+C6H13BO6+[C9H3O3·(C6H15N)3]55−65℃, 2−4h氮气保护C15H13BO12+3C6H15N
+反应说明
+硼酸双甘油酯的羟基与偏苯三酸酐的酰氯基团发生亲核取代，形成稳定的酯键结构；
+产物含硼元素，为后续固相成炭提供基础，反应后经过滤、65-75℃真空干燥得到阻燃单体。
+    `
+    // console.log(`原始文本长度: ${text}`);
     const outputs = dap.createDapOutputs(text);
     console.log(outputs);
 
