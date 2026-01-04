@@ -2,8 +2,13 @@
 
 const { bech32 } = require('bech32');
 const bitcoin = require('bitcoinjs-lib');
+const pako = require('pako');
 
 class ScashDAP {
+  // 定义协议头
+  MAGIC_RAW = Buffer.from([0xAF, 0xAF, 0xAF, 0xAF]); // 原文模式
+  MAGIC_ZIP = Buffer.from([0xAC, 0xAC, 0xAC, 0xAC]); // 压缩模式
+  CHUNK_PAYLOAD_SIZE = 28;// 32 - 4
 
   NETWORK = ""
 
@@ -13,18 +18,44 @@ class ScashDAP {
 
   // --- 核心协议实现, 创建 DAP 输出 ---
   createDapOutputs(text) {
-    const MAGIC = Buffer.from([0xAF, 0xAF, 0xAF, 0xAF]); // 协议头
-    const CHUNK_DATA_SIZE = 28; // 32 - 4
+    // 1. 转为 Buffer
+    const rawBuffer = Buffer.from(text, 'utf8');
 
-    const buffer = Buffer.from(text, 'utf8');
+    let finalPayload = rawBuffer;
+    let selectedMagic = this.MAGIC_RAW;
+    let mode = 'RAW';
+
+    // 2. 尝试压缩 (使用 pako)
+    try {
+      // pako.deflate 默认生成 Zlib 格式 (RFC 1950)，包含头部校验
+      // 这与 Node.js 的 zlib.deflateSync 是一模一样的
+      const compressed = pako.deflate(rawBuffer);
+      const compressedBuffer = Buffer.from(compressed);
+
+      // 3. 智能决策：哪个小用哪个
+      // 只有当压缩后体积确实变小了，才使用压缩模式
+      if (compressedBuffer.length < rawBuffer.length) {
+        finalPayload = compressedBuffer;
+        selectedMagic = this.MAGIC_ZIP;
+        mode = 'ZIP';
+        console.log(`[Scash-DAP] 压缩生效: ${rawBuffer.length} -> ${compressedBuffer.length} bytes`);
+      } else {
+        console.log(`[Scash-DAP] 保持原文: 压缩未减小体积`);
+      }
+    } catch (e) {
+      console.warn("压缩异常，回退到原文模式", e);
+    }
+
+
+
     const outputs = [];
 
-    for (let i = 0; i < buffer.length; i += CHUNK_DATA_SIZE) {
+    for (let i = 0; i < finalPayload.length; i += this.CHUNK_PAYLOAD_SIZE) {
       const chunk = Buffer.alloc(32); // 申请32字节空间(自动补0)
-      MAGIC.copy(chunk, 0); // 写入头
+      selectedMagic.copy(chunk, 0); // 写入头
 
-      const end = Math.min(i + CHUNK_DATA_SIZE, buffer.length);
-      buffer.subarray(i, end).copy(chunk, 4); // 写入数据
+      const end = Math.min(i + this.CHUNK_PAYLOAD_SIZE, finalPayload.length);
+      finalPayload.subarray(i, end).copy(chunk, 4); // 写入数据
 
       // 生成 P2WSH 地址
       const payment = bitcoin.payments.p2wsh({
@@ -43,8 +74,10 @@ class ScashDAP {
 
   // --- 核心协议实现, 解析 DAP 交易 ---
   parseDapTransaction(outputs) {
-    const MAGIC_HEX = 'afafafaf';
+    const MAGIC_HEX_RAW = this.MAGIC_RAW.toString('hex');
+    const MAGIC_HEX_ZIP = this.MAGIC_ZIP.toString('hex');
     let fullBuffer = Buffer.alloc(0);
+    let isCompressed = false;
 
     for (const out of outputs) {
       // 1. 解码地址
@@ -53,30 +86,50 @@ class ScashDAP {
       const hash = this.decodeScashAddressToHash(address);
 
       // 2. 检查协议头
-      if (hash && hash.length === 32 && hash.toString('hex').startsWith(MAGIC_HEX)) {
-        // 3. 提取数据 (去掉前4字节)
-        fullBuffer = Buffer.concat([fullBuffer, hash.subarray(4)]);
+      if (hash && hash.length === 32) {
+        const hex = hash.toString('hex');
+        if (hex.startsWith(MAGIC_HEX_RAW)) {
+          // 3. 提取数据 (去掉前4字节)
+          fullBuffer = Buffer.concat([fullBuffer, hash.subarray(4)]);
+        } else if (hex.startsWith(MAGIC_HEX_ZIP)) {
+          isCompressed = true;
+          fullBuffer = Buffer.concat([fullBuffer, hash.subarray(4)]);
+        }
       }
     }
 
-    // 4. 去除补零并转码
+    // 4. 去除补零
     let clean = fullBuffer;
     while (clean.length > 0 && clean[clean.length - 1] === 0) {
       clean = clean.subarray(0, clean.length - 1);
+    }
+
+    // 5. 如果是压缩数据，进行解压
+    if (isCompressed) {
+      try {
+        const inflated = pako.inflate(clean);
+        return Buffer.from(inflated).toString('utf8');
+      } catch (e) {
+        console.warn("解压失败", e);
+        return "";
+      }
     }
 
     return clean.toString('utf8');
   }
 
   /**
- * 将 Scash 地址解码为 32字节 Hash Buffer
- * 如果不是 P2WSH (Scash1...) 或解码失败，返回 null
- */
+   * 将 Scash 地址解码为 32字节 Hash Buffer
+   * 如果不是 P2WSH (Scash1...) 或解码失败，返回 null
+   */
   decodeScashAddressToHash(address) {
     try {
-      if (!address || !address.startsWith('scash1')) return null;
+      // 动态获取前缀，默认为 'scash'
+      const prefix = (this.NETWORK && this.NETWORK.bech32) ? this.NETWORK.bech32 : 'scash';
+      
+      if (!address || !address.startsWith(prefix)) return null;
       const decoded = bech32.decode(address);
-      if (decoded.prefix !== 'scash') return null;
+      if (decoded.prefix !== prefix) return null;
       // bech32 words -> bytes
       const data = bech32.fromWords(decoded.words.slice(1));
       return Buffer.from(data);
