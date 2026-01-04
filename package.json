@@ -1,6 +1,6 @@
 {
   "name": "scash-dap",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "**Scash-DAP** 是一种轻量级、无状态、抗审查的链上数据存储协议。它利用比特币（及 Scash）原生 SegWit (P2WSH) 机制，将任意数据伪装成标准的区块链地址，从而实现绕过 `OP_RETURN` 限制的永久数据存证。",
   "main": "index.js",
   "types": "src/core/ScashDAP.d.ts",
@@ -14,13 +14,13 @@
   "scripts": {
     "test": "node src/test/ScashDAP.test.js",
     "build": "esbuild src/core/ScashDAP.js --bundle --outfile=dist/scash-dap.js --global-name=ScashDAP --platform=browser --format=iife",
-    "build:esm": "esbuild src/core/ScashDAP.js --bundle --outfile=dist/scash-dap.esm.js --platform=neutral --format=esm --external:bech32 --external:bitcoinjs-lib --external:pako --external:brotli-wasm",
+    "build:esm": "esbuild src/core/ScashDAP.js --bundle --outfile=dist/scash-dap.mjs --platform=neutral --format=esm --external:bech32 --external:bitcoinjs-lib --external:pako",
     "prepublishOnly": "npm run build && npm run build:esm"
   },
   "exports": {
     ".": {
       "types": "./src/core/ScashDAP.d.ts",
-      "import": "./dist/scash-dap.esm.js",
+      "import": "./dist/scash-dap.mjs",
       "require": "./index.js"
     }
   },

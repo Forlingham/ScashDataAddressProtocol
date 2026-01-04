@@ -6,14 +6,24 @@ const pako = require('pako');
 
 class ScashDAP {
   // 定义协议头
-  MAGIC_RAW = Buffer.from([0xAF, 0xAF, 0xAF, 0xAF]); // 原文模式
-  MAGIC_ZIP = Buffer.from([0xAC, 0xAC, 0xAC, 0xAC]); // 压缩模式
+  PROTOCOLS = {
+    RAW: {
+      magic: Buffer.from([0xAF, 0xAF, 0xAF, 0xAF]),
+      description: "原文模式 - 直接存储UTF8文本"
+    },
+    ZIP: {
+      magic: Buffer.from([0xAC, 0xAC, 0xAC, 0xAC]),
+      description: "压缩模式 - 使用Deflate算法压缩"
+    }
+  };
   CHUNK_PAYLOAD_SIZE = 28;// 32 - 4
 
   NETWORK = ""
+  debug = false;
 
-  constructor(network) {
+  constructor(network, debug = false) {
     this.NETWORK = network;
+    this.debug = debug;
   }
 
   // --- 核心协议实现, 创建 DAP 输出 ---
@@ -22,7 +32,7 @@ class ScashDAP {
     const rawBuffer = Buffer.from(text, 'utf8');
 
     let finalPayload = rawBuffer;
-    let selectedMagic = this.MAGIC_RAW;
+    let selectedMagic = this.PROTOCOLS.RAW.magic;
     let mode = 'RAW';
 
     // 2. 尝试压缩 (使用 pako)
@@ -36,11 +46,15 @@ class ScashDAP {
       // 只有当压缩后体积确实变小了，才使用压缩模式
       if (compressedBuffer.length < rawBuffer.length) {
         finalPayload = compressedBuffer;
-        selectedMagic = this.MAGIC_ZIP;
+        selectedMagic = this.PROTOCOLS.ZIP.magic;
         mode = 'ZIP';
-        console.log(`[Scash-DAP] 压缩生效: ${rawBuffer.length} -> ${compressedBuffer.length} bytes`);
+        if (this.debug) {
+          console.log(`[Scash-DAP] 压缩生效: ${rawBuffer.length} -> ${compressedBuffer.length} bytes`);
+        }
       } else {
-        console.log(`[Scash-DAP] 保持原文: 压缩未减小体积`);
+        if (this.debug) {
+          console.log(`[Scash-DAP] 保持原文: 压缩未减小体积`);
+        }
       }
     } catch (e) {
       console.warn("压缩异常，回退到原文模式", e);
@@ -74,8 +88,8 @@ class ScashDAP {
 
   // --- 核心协议实现, 解析 DAP 交易 ---
   parseDapTransaction(outputs) {
-    const MAGIC_HEX_RAW = this.MAGIC_RAW.toString('hex');
-    const MAGIC_HEX_ZIP = this.MAGIC_ZIP.toString('hex');
+    const MAGIC_HEX_RAW = this.PROTOCOLS.RAW.magic.toString('hex');
+    const MAGIC_HEX_ZIP = this.PROTOCOLS.ZIP.magic.toString('hex');
     let fullBuffer = Buffer.alloc(0);
     let isCompressed = false;
 
@@ -119,6 +133,23 @@ class ScashDAP {
   }
 
   /**
+   * 检查地址是否属于这个协议
+   * @param address 钱包地址
+   * @returns 是否属于这个协议的数据地址
+   */
+  isScashDAPAddress(address) {
+    const hash = this.decodeScashAddressToHash(address);
+    if (!hash) return false;
+    const hex = hash.toString('hex');
+    for (const protocol of Object.values(this.PROTOCOLS)) {
+      if (hex.startsWith(protocol.magic.toString('hex'))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * 将 Scash 地址解码为 32字节 Hash Buffer
    * 如果不是 P2WSH (Scash1...) 或解码失败，返回 null
    */
@@ -126,7 +157,7 @@ class ScashDAP {
     try {
       // 动态获取前缀，默认为 'scash'
       const prefix = (this.NETWORK && this.NETWORK.bech32) ? this.NETWORK.bech32 : 'scash';
-      
+
       if (!address || !address.startsWith(prefix)) return null;
       const decoded = bech32.decode(address);
       if (decoded.prefix !== prefix) return null;

@@ -15,14 +15,14 @@ async function runTests() {
   console.log('--- 开始 ScashDAP 测试 ---');
 
   const network = bitcoin.networks.regtest;
-  const dap = new ScashDAP(network);
+  const dap = new ScashDAP(network, true);
 
   // 测试用例 1: 短文本 (无压缩)
   {
     console.log('\n[测试 1] 短文本 (无压缩模式)');
     const text = "Hello Scash DAP";
     const outputs = dap.createDapOutputs(text);
-    
+
     console.log(`生成了 ${outputs.length} 个输出`);
     assert(outputs.length > 0, '应该生成至少一个输出');
 
@@ -36,9 +36,15 @@ async function runTests() {
 
     const decoded = dap.parseDapTransaction(txOutputs);
     console.log(`解码结果: "${decoded}"`);
-    
+
     assert.strictEqual(decoded, text, '解码后的文本应与原文一致');
     console.log('✅ 测试 1 通过');
+
+    // 测试 1: 验证地址是否为 ScashDAP 地址
+    const isDapAddress = dap.isScashDAPAddress(outputs[0].address);
+    assert(isDapAddress, '第一个输出地址应是 ScashDAP 地址');
+    console.log(`第一个输出地址: ${outputs[0].address}`);
+    console.log('✅ 测试 1.1 通过');
   }
 
   // 测试用例 2: 长文本 (触发压缩)
@@ -61,34 +67,33 @@ C6H13BO6+[C9H3O3·(C6H15N)3]55−65℃, 2−4h氮气保护C15H13BO12+3C6H15N
     `
     // console.log(`原始文本长度: ${text}`);
     const outputs = dap.createDapOutputs(text);
-    console.log(outputs);
+    console.log(`生成了 ${outputs.length} 个输出`);
 
-    
     // 验证是否触发了压缩逻辑 (可以通过 console log 观察，或者检查 magic bytes)
     // 但作为黑盒测试，主要验证解码是否正确
-    
+
     const txOutputs = outputs.map(o => ({
       scriptPubKey: { address: o.address }
     }));
 
     try {
-        const decoded = dap.parseDapTransaction(txOutputs);
-        console.log(`解码结果长度: ${decoded.length}`);
-        
-        if (decoded !== text) {
-            console.error('❌ 解码内容不匹配');
-            console.error(`期望长度: ${text.length}, 实际长度: ${decoded.length}`);
-            // 如果是因为没有解压，可能会看到乱码或者压缩数据
-        }
-        assert.strictEqual(decoded, text, '解码后的文本应与原文一致');
-        console.log('✅ 测试 2 通过');
+      const decoded = dap.parseDapTransaction(txOutputs);
+      console.log(`解码结果长度: ${decoded.length}`);
+
+      if (decoded !== text) {
+        console.error('❌ 解码内容不匹配');
+        console.error(`期望长度: ${text.length}, 实际长度: ${decoded.length}`);
+        // 如果是因为没有解压，可能会看到乱码或者压缩数据
+      }
+      assert.strictEqual(decoded, text, '解码后的文本应与原文一致');
+      console.log('✅ 测试 2 通过');
     } catch (err) {
-        console.error('❌ 测试 2 失败:', err.message);
-        // 不抛出错误，以便继续执行或显示总结，或者直接抛出
-        throw err;
+      console.error('❌ 测试 2 失败:', err.message);
+      // 不抛出错误，以便继续执行或显示总结，或者直接抛出
+      throw err;
     }
   }
-  
+
   console.log('\n所有测试完成!');
 }
 
