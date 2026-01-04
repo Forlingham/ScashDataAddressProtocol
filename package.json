@@ -21,6 +21,7 @@
   "dependencies": {
     "bech32": "^2.0.0",
     "bitcoinjs-lib": "^7.0.0",
+    "brotli-wasm": "^3.0.1",
     "pako": "^2.1.0"
   },
   "overrides": {
