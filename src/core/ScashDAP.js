@@ -2,8 +2,7 @@
 
 const { bech32 } = require('bech32');
 const bitcoin = require('bitcoinjs-lib');
-// const pako = require('pako');
-const brotli = require('brotli-wasm');
+const pako = require('pako');
 
 class ScashDAP {
   // 定义协议头
@@ -30,7 +29,7 @@ class ScashDAP {
     try {
       // pako.deflate 默认生成 Zlib 格式 (RFC 1950)，包含头部校验
       // 这与 Node.js 的 zlib.deflateSync 是一模一样的
-      const compressed = brotli.compress(rawBuffer);
+      const compressed = pako.deflate(rawBuffer);
       const compressedBuffer = Buffer.from(compressed);
 
       // 3. 智能决策：哪个小用哪个
@@ -108,7 +107,7 @@ class ScashDAP {
     // 5. 如果是压缩数据，进行解压
     if (isCompressed) {
       try {
-        const inflated = brotli.decompress(clean);
+        const inflated = pako.inflate(clean);
         return Buffer.from(inflated).toString('utf8');
       } catch (e) {
         console.warn("解压失败", e);
