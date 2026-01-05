@@ -65,6 +65,10 @@ C6H13BO6+[C9H3O3·(C6H15N)3]55−65℃, 2−4h氮气保护C15H13BO12+3C6H15N
 硼酸双甘油酯的羟基与偏苯三酸酐的酰氯基团发生亲核取代，形成稳定的酯键结构；
 产物含硼元素，为后续固相成炭提供基础，反应后经过滤、65-75℃真空干燥得到阻燃单体。
     `
+    const estimateCost = dap.estimateCost(text);
+    console.log(`估算成本: ${JSON.stringify(estimateCost)}`);
+
+
     // console.log(`原始文本长度: ${text}`);
     const outputs = dap.createDapOutputs(text);
     console.log(`生成了 ${outputs.length} 个输出`);

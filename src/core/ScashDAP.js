@@ -5,6 +5,10 @@ const bitcoin = require('bitcoinjs-lib');
 const pako = require('pako');
 
 class ScashDAP {
+  static get version() {
+    return '1.0.3';
+  }
+
   // 定义协议头
   PROTOCOLS = {
     RAW: {
@@ -26,27 +30,24 @@ class ScashDAP {
     this.debug = debug;
   }
 
-  // --- 核心协议实现, 创建 DAP 输出 ---
-  createDapOutputs(text) {
+  // --- 内部辅助：准备 Payload (压缩策略) ---
+  _preparePayload(text) {
     // 1. 转为 Buffer
     const rawBuffer = Buffer.from(text, 'utf8');
 
     let finalPayload = rawBuffer;
-    let selectedMagic = this.PROTOCOLS.RAW.magic;
+    let selectedProtocol = this.PROTOCOLS.RAW;
     let mode = 'RAW';
 
     // 2. 尝试压缩 (使用 pako)
     try {
-      // pako.deflate 默认生成 Zlib 格式 (RFC 1950)，包含头部校验
-      // 这与 Node.js 的 zlib.deflateSync 是一模一样的
       const compressed = pako.deflate(rawBuffer);
       const compressedBuffer = Buffer.from(compressed);
 
       // 3. 智能决策：哪个小用哪个
-      // 只有当压缩后体积确实变小了，才使用压缩模式
       if (compressedBuffer.length < rawBuffer.length) {
         finalPayload = compressedBuffer;
-        selectedMagic = this.PROTOCOLS.ZIP.magic;
+        selectedProtocol = this.PROTOCOLS.ZIP;
         mode = 'ZIP';
         if (this.debug) {
           console.log(`[Scash-DAP] 压缩生效: ${rawBuffer.length} -> ${compressedBuffer.length} bytes`);
@@ -60,7 +61,49 @@ class ScashDAP {
       console.warn("压缩异常，回退到原文模式", e);
     }
 
+    return { payload: finalPayload, protocol: selectedProtocol, mode };
+  }
 
+  /**
+   * 估算上链成本
+   * @param {string} text 要上链的文本
+   * @returns {object} 包含分片数量、总金额(sats)、使用模式等信息
+   */
+  estimateCost(text) {
+    const { payload, mode } = this._preparePayload(text);
+    const chunkCount = Math.ceil(payload.length / this.CHUNK_PAYLOAD_SIZE);
+    
+    return {
+      mode,
+      payloadSize: payload.length,
+      chunkCount,
+      totalSats: chunkCount * 546,
+      originalSize: Buffer.byteLength(text, 'utf8')
+    };
+  }
+
+  /**
+   * 获取地址使用的协议类型
+   * @param {string} address 
+   * @returns {string|null} 返回 'RAW', 'ZIP' 或 null
+   */
+  getProtocolType(address) {
+    const hash = this.decodeScashAddressToHash(address);
+    if (!hash) return null;
+    
+    const hex = hash.toString('hex');
+    for (const [key, protocol] of Object.entries(this.PROTOCOLS)) {
+      if (hex.startsWith(protocol.magic.toString('hex'))) {
+        return key;
+      }
+    }
+    return null;
+  }
+
+  // --- 核心协议实现, 创建 DAP 输出 ---
+  createDapOutputs(text) {
+    const { payload: finalPayload, protocol: selectedProtocol } = this._preparePayload(text);
+    const selectedMagic = selectedProtocol.magic;
 
     const outputs = [];
 
@@ -87,6 +130,18 @@ class ScashDAP {
 
 
   // --- 核心协议实现, 解析 DAP 交易 ---
+  /**
+   * 解析 DAP 交易
+   * 从交易输出中还原文本数据
+   * 
+   * @security 安全警告：
+   * 此方法返回原始文本数据，不包含任何清洗或转义。
+   * 如果返回的字符串包含恶意脚本（如 <script>），直接在浏览器中使用 innerHTML 渲染会导致 XSS 攻击。
+   * 请务必使用 document.innerText / textContent 展示，或使用 DOMPurify 等库进行过滤。
+   * 
+   * @param {Array} outputs 交易输出数组
+   * @returns {string} 还原后的文本数据
+   */
   parseDapTransaction(outputs) {
     const MAGIC_HEX_RAW = this.PROTOCOLS.RAW.magic.toString('hex');
     const MAGIC_HEX_ZIP = this.PROTOCOLS.ZIP.magic.toString('hex');
