@@ -2,7 +2,7 @@
 
 const { rpcApi } = require('./tool/tool.js');
 const { NETWORK } = require('./const.js');
-const ScashDAP = require('../../index.js');  
+const ScashDAP = require('scash-dap');
 
 // 初始化ScashDAP
 const scashDAP = new ScashDAP(NETWORK);

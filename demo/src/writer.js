@@ -10,10 +10,10 @@ const { NETWORK } = require('./const.js');
 const fs = require('fs');
 const { rpcApi } = require('./tool/tool.js');
 const path = require('path');
-const ScashDAP = require('../../index.js');
+const ScashDAP = require('scash-dap');
 
 // 初始化ScashDAP
-const scashDAP = new ScashDAP(NETWORK);
+const scashDAP = new ScashDAP(NETWORK, true);
 
 const envPath = process.pkg ? path.resolve(process.execPath, '../.env') : path.resolve(__dirname, '../.env');
 const SCASH_NETWORK = NETWORK;
@@ -96,12 +96,11 @@ async function writer(TEXT_DATA, logger = console) {
 
         // --- [核心修改] 生成伪装地址输出 ---
         const dataOutputs = scashDAP.createDapOutputs(TEXT_DATA);
-        logger.log(dataOutputs, '233');
+        // logger.log(dataOutputs);
 
         let totalBurned = 0;
         dataOutputs.forEach((item, index) => {
             logger.log(`- [数据片段 ${index + 1}] 伪装地址: ${item.address}`);
-            logger.log(`  (对应数据Hex: ${item.dataHex})`);
 
             psbt.addOutput({
                 address: item.address,

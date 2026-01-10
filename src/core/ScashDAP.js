@@ -6,7 +6,7 @@ const pako = require('pako');
 
 class ScashDAP {
   static get version() {
-    return '1.0.3';
+    return '1.0.4';
   }
 
   // 定义协议头
@@ -139,18 +139,39 @@ class ScashDAP {
    * 如果返回的字符串包含恶意脚本（如 <script>），直接在浏览器中使用 innerHTML 渲染会导致 XSS 攻击。
    * 请务必使用 document.innerText / textContent 展示，或使用 DOMPurify 等库进行过滤。
    * 
-   * @param {Array} outputs 交易输出数组
+   * @param {Array<string>|Array<object>} inputs 输入数组，支持以下格式：
+   * 1. 字符串数组: ['scash1...', 'scash1...']
+   * 2. 对象数组 (标准): [{ address: 'scash1...' }, { address: 'scash1...' }]
+   * 3. 对象数组 (Electrum/RPC): [{ scriptPubKey: { address: '...' } }]
    * @returns {string} 还原后的文本数据
    */
-  parseDapTransaction(outputs) {
+  parseDapTransaction(inputs) {
     const MAGIC_HEX_RAW = this.PROTOCOLS.RAW.magic.toString('hex');
     const MAGIC_HEX_ZIP = this.PROTOCOLS.ZIP.magic.toString('hex');
     let fullBuffer = Buffer.alloc(0);
     let isCompressed = false;
 
-    for (const out of outputs) {
-      // 1. 解码地址
-      const address = out.scriptPubKey.address || (out.scriptPubKey.addresses ? out.scriptPubKey.addresses[0] : null);
+    // 归一化输入为地址字符串数组
+    const addresses = [];
+    if (Array.isArray(inputs)) {
+      for (const item of inputs) {
+        if (typeof item === 'string') {
+          // Case 1: 纯字符串数组 ['scash1...', 'scash1...']
+          addresses.push(item);
+        } else if (typeof item === 'object' && item !== null) {
+          if (item.address) {
+             // Case 2: 简单对象 { address: '...' }
+            addresses.push(item.address);
+          } else if (item.scriptPubKey) {
+            // Case 3: 嵌套对象 (RPC/Electrum) { scriptPubKey: { address: '...' } }
+            const addr = item.scriptPubKey.address || (item.scriptPubKey.addresses ? item.scriptPubKey.addresses[0] : null);
+            if (addr) addresses.push(addr);
+          }
+        }
+      }
+    }
+
+    for (const address of addresses) {
       if (!address) continue;
       const hash = this.decodeScashAddressToHash(address);
 

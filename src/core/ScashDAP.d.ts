@@ -75,9 +75,9 @@ declare class ScashDAP {
      * 返回的数据可能包含恶意代码（如 XSS）。
      * 在浏览器渲染时请使用 innerText 而非 innerHTML。
      * 
-     * @param outputs 交易输出数组 (包含 scriptPubKey)
+     * @param inputs 输入数组 (支持 string[] | {address: string}[] | RPC outputs)
      */
-    parseDapTransaction(outputs: any[]): string;
+    parseDapTransaction(inputs: string[] | { address: string }[] | any[]): string;
 
   /**
    * 验证地址是否为 ScashDAP 地址

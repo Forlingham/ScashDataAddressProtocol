@@ -1,6 +1,6 @@
 {
   "name": "demo",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "",
   "main": "index.html",
   "window": {
@@ -43,6 +43,7 @@
     "ecpair": "^3.0.0",
     "inquirer": "^8.2.7",
     "nw": "^0.106.0",
+    "scash-dap": "^1.0.4",
     "tiny-secp256k1": "^2.2.4"
   },
   "overrides": {
