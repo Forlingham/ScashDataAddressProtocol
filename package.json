@@ -1,29 +1,47 @@
 {
   "name": "scash-dap",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "**Scash-DAP** 是一种轻量级、无状态、抗审查的链上数据存储协议。它利用比特币（及 Scash）原生 SegWit (P2WSH) 机制，将任意数据伪装成标准的区块链地址，从而实现绕过 `OP_RETURN` 限制的永久数据存证。",
   "main": "index.js",
+  "module": "./dist/scash-dap.mjs",
+  "browser": "./dist/scash-dap.js",
+  "unpkg": "./dist/scash-dap.js",
+  "jsdelivr": "./dist/scash-dap.js",
   "types": "src/core/ScashDAP.d.ts",
   "files": [
     "dist",
     "src",
+    "shims",
     "index.js",
     "LICENSE",
     "docs",
     "README.md"
   ],
   "scripts": {
-    "test": "node src/test/ScashDAP.test.js",
-    "build": "esbuild src/core/ScashDAP.js --bundle --outfile=dist/scash-dap.js --global-name=ScashDAP --platform=browser --format=iife",
+    "test": "node src/test/ScashDAP.test.js && node src/test/browser-bundle.test.js",
+    "build": "npm run build:browser && npm run build:browser:esm && npm run build:esm",
+    "build:browser": "esbuild src/core/ScashDAP.js --bundle --outfile=dist/scash-dap.js --global-name=ScashDAP --platform=browser --format=iife --inject:./shims/buffer-shim.js --define:global=globalThis --minify",
+    "build:browser:esm": "esbuild src/core/ScashDAP.js --bundle --outfile=dist/scash-dap.browser.mjs --platform=browser --format=esm --inject:./shims/buffer-shim.js --define:global=globalThis --minify",
     "build:esm": "esbuild src/core/ScashDAP.js --bundle --outfile=dist/scash-dap.mjs --platform=neutral --format=esm --external:bech32 --external:bitcoinjs-lib --external:pako",
-    "prepublishOnly": "npm run build && npm run build:esm"
+    "prepublishOnly": "npm run build"
   },
   "exports": {
     ".": {
       "types": "./src/core/ScashDAP.d.ts",
+      "browser": {
+        "import": "./dist/scash-dap.browser.mjs",
+        "default": "./dist/scash-dap.js"
+      },
       "import": "./dist/scash-dap.mjs",
-      "require": "./index.js"
-    }
+      "require": "./index.js",
+      "default": "./index.js"
+    },
+    "./browser": {
+      "types": "./src/core/ScashDAP.d.ts",
+      "import": "./dist/scash-dap.browser.mjs",
+      "default": "./dist/scash-dap.js"
+    },
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "git",
@@ -59,6 +77,7 @@
   },
   "devDependencies": {
     "browserify": "^17.0.1",
+    "buffer": "^6.0.3",
     "esbuild": "^0.27.2"
   }
 }

@@ -6,7 +6,13 @@ node_modules
 # next.js
 /.next/
 /out/
-dist
+
+# 注意：根目录 dist/ 是发布到 npm 的核心打包产物，且浏览器 demo 直接引用 dist/scash-dap.js，
+# 因此故意提交到仓库，方便用户 git clone 之后无需 npm run build 即可打开 demo。
+# 仅忽略子项目（如 demo/dist）下的构建产物。
+demo/dist
+**/.next/dist
+
 # production
 /build
 .env
@@ -15,4 +21,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-

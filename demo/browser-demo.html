@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScashDAP - 纯浏览器 Demo</title>
+  <style>
+    :root {
+      --primary-color: #2196F3;
+      --primary-hover: #1976D2;
+      --success-color: #4caf50;
+      --error-color: #e57373;
+      --bg-color: #f0f2f5;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --text-secondary: #666;
+      --border-color: #e0e0e0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .header-bar {
+      background-color: var(--card-bg);
+      padding: 15px 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      height: 36px;
+      width: auto;
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .badge {
+      font-size: 12px;
+      background: var(--success-color);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .full-row {
+      grid-column: 1 / -1;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 22px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+    }
+
+    h3::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background-color: var(--primary-color);
+      margin-right: 10px;
+      border-radius: 2px;
+    }
+
+    .desc {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin: 0 0 14px 0;
+      line-height: 1.5;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+
+    textarea:focus, input[type="text"]:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    button {
+      padding: 8px 18px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 10px;
+      margin-right: 8px;
+      transition: background-color .2s;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    button.secondary {
+      background-color: #fff;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+    }
+
+    button.secondary:hover {
+      background-color: #f5f5f5;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 280px;
+      overflow-y: auto;
+      margin: 12px 0 0 0;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #f0f4f8;
+      color: var(--text-secondary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .meta b {
+      color: var(--text-color);
+    }
+
+    .alert {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .alert.warning {
+      background: #fff3e0;
+      color: #e65100;
+      border-left: 4px solid #ff9800;
+    }
+
+    .footnote {
+      grid-column: 1 / -1;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: center;
+      padding: 18px;
+    }
+
+    @media (max-width: 800px) {
+      .container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header-bar">
+    <img src="./img/logo.png" alt="logo" class="logo" onerror="this.style.display='none'">
+    <h1 class="app-title">ScashDAP 纯浏览器 Demo</h1>
+    <span class="badge" id="version-badge">loading...</span>
+    <span class="tag">通过 &lt;script&gt; 标签直接加载，无需打包器</span>
+  </div>
+
+  <div class="container">
+
+    <!-- 1. 编码：文本 -> 伪装地址 -->
+    <div class="card">
+      <h3>1. 编码 (createDapOutputs)</h3>
+      <p class="desc">把任意文本转换成一组 P2WSH 伪装地址。库会自动在 RAW（原文）与 ZIP（pako 压缩）之间智能选择更省的模式。</p>
+      <textarea id="encode-input" placeholder="输入要上链的文本…">Hello, ScashDAP! 这是一条直接在浏览器里编码的链上消息。</textarea>
+      <button id="btn-estimate" class="secondary">估算成本</button>
+      <button id="btn-encode">生成伪装地址</button>
+      <pre id="encode-output">// 输出会显示在这里</pre>
+    </div>
+
+    <!-- 2. 解析：伪装地址 -> 文本 -->
+    <div class="card">
+      <h3>2. 解析 (parseDapTransaction)</h3>
+      <p class="desc">从一组伪装地址（每行一个）还原出原始文本。点击下方"使用上方编码结果"可快速做 round-trip 验证。</p>
+      <textarea id="decode-input" placeholder="每行粘贴一个 scash1... 地址"></textarea>
+      <button id="btn-fill-from-encode" class="secondary">使用上方编码结果</button>
+      <button id="btn-decode">解析文本</button>
+      <pre id="decode-output">// 解析结果会显示在这里</pre>
+    </div>
+
+    <!-- 3. 单地址解码 -->
+    <div class="card">
+      <h3>3. 单地址解码 (decodeScashAddressToHash)
+        <span class="tag" style="background:#e3f2fd;color:#1976d2;">公开方法</span>
+      </h3>
+      <p class="desc">把一个 Scash bech32 P2WSH 地址解码为 32 字节 Hash。前 4 字节为 Magic Header（区分 RAW / ZIP），后 28 字节为分片数据。</p>
+      <input type="text" id="hash-input" placeholder="输入一个 scash1... 地址">
+      <button id="btn-hash">解码 Hash</button>
+      <pre id="hash-output">// 输出会显示在这里</pre>
+    </div>
+
+    <!-- 4. 协议识别 -->
+    <div class="card">
+      <h3>4. 协议识别 (isScashDAPAddress / getProtocolType)</h3>
+      <p class="desc">判断一个地址是否属于 ScashDAP 协议，以及它使用的协议模式（RAW 或 ZIP）。</p>
+      <input type="text" id="check-input" placeholder="输入一个 scash1... 地址">
+      <button id="btn-check">识别协议</button>
+      <pre id="check-output">// 输出会显示在这里</pre>
+    </div>
+
+    <!-- 5. 安全提示 -->
+    <div class="card full-row">
+      <div class="alert warning">
+        <b>⚠ 安全提示</b>：链上数据是公开且不可控的。当用 <code>parseDapTransaction</code> 还原文本并展示到页面时，
+        <b>务必使用 <code>textContent</code> / <code>innerText</code></b>，<b>不要</b>使用 <code>innerHTML</code>，否则可能导致 XSS。本 demo 全程使用 <code>textContent</code>。
+      </div>
+    </div>
+
+    <div class="footnote">
+      此 demo 通过 <code>&lt;script src="../dist/scash-dap.js"&gt;</code> 直接加载，全程在浏览器里运行，不依赖 Node.js / NW.js。
+      你也可以通过 CDN 使用： <code>https://unpkg.com/scash-dap/dist/scash-dap.js</code>
+    </div>
+  </div>
+
+  <!-- 引入 IIFE 浏览器构建（已注入 Buffer polyfill，并把 bech32 / bitcoinjs-lib / pako 全部打包进来） -->
+  <script src="../dist/scash-dap.js"></script>
+
+  <script>
+    // ============================================================
+    // ScashDAP 浏览器 Demo - 纯前端逻辑
+    // ============================================================
+
+    // Scash 主网 NETWORK 配置（与 demo/src/const.js 保持一致）
+    const NETWORK = {
+      messagePrefix: '\x18Scash Signed Message:\n',
+      bech32: 'scash',
+      bip32: { public: 0x0488b21e, private: 0x0488ade4 },
+      pubKeyHash: 0x3c,
+      scriptHash: 0x7d,
+      wif: 0x80
+    };
+
+    // 兜底：如果 dist/scash-dap.js 没构建，提示用户先 build
+    if (typeof ScashDAP === 'undefined') {
+      document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif;">' +
+        '<h2 style="color:#e57373;">未检测到 ScashDAP 全局变量</h2>' +
+        '<p>请先在仓库根目录运行：<code>npm install &amp;&amp; npm run build</code> 生成 <code>dist/scash-dap.js</code>，然后再打开本页面。</p>' +
+        '</div>';
+      throw new Error('ScashDAP not loaded');
+    }
+
+    // 显示版本号
+    document.getElementById('version-badge').textContent = 'v' + ScashDAP.version;
+
+    const dap = new ScashDAP(NETWORK, false);
+
+    // 工具：安全输出 JSON 到 <pre>，使用 textContent 防 XSS
+    function show(elId, value) {
+      const el = document.getElementById(elId);
+      if (typeof value === 'string') {
+        el.textContent = value;
+      } else {
+        el.textContent = JSON.stringify(value, null, 2);
+      }
+    }
+
+    function showError(elId, err) {
+      document.getElementById(elId).textContent = '[ERROR] ' + (err && err.message ? err.message : String(err));
+    }
+
+    // ---------- 1. 编码 ----------
+    let lastEncodedAddresses = [];
+
+    document.getElementById('btn-estimate').onclick = function () {
+      const text = document.getElementById('encode-input').value;
+      try {
+        const cost = dap.estimateCost(text);
+        show('encode-output', { type: '[估算]', ...cost });
+      } catch (e) { showError('encode-output', e); }
+    };
+
+    document.getElementById('btn-encode').onclick = function () {
+      const text = document.getElementById('encode-input').value;
+      try {
+        const outputs = dap.createDapOutputs(text);
+        lastEncodedAddresses = outputs.map(o => o.address);
+        show('encode-output', {
+          type: '[编码]',
+          outputCount: outputs.length,
+          totalSats: outputs.reduce((s, o) => s + o.value, 0),
+          outputs
+        });
+      } catch (e) { showError('encode-output', e); }
+    };
+
+    // ---------- 2. 解析 ----------
+    document.getElementById('btn-fill-from-encode').onclick = function () {
+      if (!lastEncodedAddresses.length) {
+        document.getElementById('decode-input').value = '';
+        show('decode-output', '请先点击 "生成伪装地址" 生成数据');
+        return;
+      }
+      document.getElementById('decode-input').value = lastEncodedAddresses.join('\n');
+    };
+
+    document.getElementById('btn-decode').onclick = function () {
+      const raw = document.getElementById('decode-input').value;
+      const addresses = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (!addresses.length) {
+        show('decode-output', '请输入至少一个地址');
+        return;
+      }
+      try {
+        const text = dap.parseDapTransaction(addresses);
+        show('decode-output', {
+          type: '[解析]',
+          inputAddressCount: addresses.length,
+          parsedText: text
+        });
+      } catch (e) { showError('decode-output', e); }
+    };
+
+    // ---------- 3. 单地址解码 (decodeScashAddressToHash 公开方法) ----------
+    document.getElementById('btn-hash').onclick = function () {
+      const address = document.getElementById('hash-input').value.trim();
+      if (!address) {
+        show('hash-output', '请输入地址');
+        return;
+      }
+      try {
+        const hash = dap.decodeScashAddressToHash(address);
+        if (!hash) {
+          show('hash-output', '解码失败：不是合法的 P2WSH 地址或 bech32 解码出错');
+          return;
+        }
+        const hex = hash.toString('hex');
+        show('hash-output', {
+          type: '[Hash 解码]',
+          address,
+          hashLength: hash.length,
+          hashHex: hex,
+          magicHeader: hex.slice(0, 8),
+          payload: hex.slice(8)
+        });
+      } catch (e) { showError('hash-output', e); }
+    };
+
+    // ---------- 4. 协议识别 ----------
+    document.getElementById('btn-check').onclick = function () {
+      const address = document.getElementById('check-input').value.trim();
+      if (!address) {
+        show('check-output', '请输入地址');
+        return;
+      }
+      try {
+        const isDap = dap.isScashDAPAddress(address);
+        const type = dap.getProtocolType(address);
+        show('check-output', {
+          type: '[协议识别]',
+          address,
+          isScashDAPAddress: isDap,
+          protocolType: type,
+          description: type ? dap.PROTOCOLS[type].description : '未识别为 ScashDAP 地址'
+        });
+      } catch (e) { showError('check-output', e); }
+    };
+
+    // ---------- 启动自检：自动跑一次 round-trip 显示在控制台 ----------
+    (function selfCheck() {
+      try {
+        const sample = 'Hello, ScashDAP browser demo!';
+        const outs = dap.createDapOutputs(sample);
+        const back = dap.parseDapTransaction(outs);
+        if (back === sample) {
+          console.log('[ScashDAP] 启动自检通过 ✅', { sample, outputCount: outs.length });
+        } else {
+          console.error('[ScashDAP] 启动自检失败：round-trip 不一致', { sample, back });
+        }
+      } catch (e) {
+        console.error('[ScashDAP] 启动自检异常', e);
+      }
+    })();
+  </script>
+</body>
+
+</html>

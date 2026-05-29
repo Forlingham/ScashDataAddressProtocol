@@ -86,10 +86,11 @@ declare class ScashDAP {
   isScashDAPAddress(address: string): boolean
 
   /**
-   * 将 Scash 地址解码为 32字节 Hash Buffer
+   * 将 Scash 地址（bech32 P2WSH）解码为 32 字节 Hash Buffer
+   * 如果不是合法的 P2WSH 地址或 bech32 解码失败，返回 null
    * @param address 钱包地址
    */
-  private decodeScashAddressToHash(address: string): Buffer | null
+  decodeScashAddressToHash(address: string): Buffer | null
 }
 
 export = ScashDAP
