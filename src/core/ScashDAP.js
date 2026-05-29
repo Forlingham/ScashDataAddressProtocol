@@ -6,7 +6,7 @@ const pako = require('pako');
 
 class ScashDAP {
   static get version() {
-    return '1.0.4';
+    return '1.1.0';
   }
 
   // 定义协议头

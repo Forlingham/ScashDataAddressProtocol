@@ -17,7 +17,7 @@ var require_ScashDAP = __commonJS({
     var pako = __require("pako");
     var ScashDAP = class {
       static get version() {
-        return "1.0.4";
+        return "1.1.0";
       }
       // 定义协议头
       PROTOCOLS = {
