@@ -226,8 +226,12 @@ class ScashDAP {
   }
 
   /**
-   * 将 Scash 地址解码为 32字节 Hash Buffer
-   * 如果不是 P2WSH (Scash1...) 或解码失败，返回 null
+   * 将 Scash 地址（bech32 P2WSH）解码为 32 字节 Hash Buffer
+   *
+   * 公共方法：可用于自定义协议解析、地址校验等高级场景
+   *
+   * @param {string} address Scash 地址（bech32 编码，前缀由 NETWORK.bech32 决定，默认 'scash'）
+   * @returns {Buffer|null} 解码后的 32 字节 Hash Buffer；如果不是合法的 P2WSH 地址或解码失败则返回 null
    */
   decodeScashAddressToHash(address) {
     try {
